@@ -2,10 +2,12 @@ import { useState, useEffect } from "preact/hooks";
 import { Header } from "./components/Header";
 import { Player } from "./components/Player";
 import { Playlist } from "./components/Playlist";
-import { Visualizer } from "./components/Visualizer";
+import { LyricsPanel } from "./components/LyricsPanel";
 import { TaskbarWidget } from "./components/TaskbarWidget";
 import { usePlaylist } from "./hooks/usePlaylist";
 import { useAudio } from "./hooks/useAudio";
+import { createLocalTrackMetadata } from "./utils/localAudio";
+import { TrackMetadata } from "../shared/types";
 
 export const App = () => {
   const [isWidgetMode, setIsWidgetMode] = useState<boolean>(() => {
@@ -20,7 +22,7 @@ export const App = () => {
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
 
-  const { playlist, addTracks, removeTrack, clearPlaylist } = usePlaylist();
+  const { playlist, addTracks, removeTrack, clearPlaylist, reorderTracks } = usePlaylist();
   const {
     currentTrack,
     isPlaying,
@@ -29,14 +31,27 @@ export const App = () => {
     volume,
     isMuted,
     isLoadingStream,
+    playbackMode,
     playTrack,
     togglePlay,
     playNext,
     playPrevious,
+    togglePlaybackMode,
     seek,
     changeVolume,
     toggleMute
   } = useAudio(playlist);
+
+  const handleAddLocalFiles = async (files: File[]) => {
+    const newTracks: TrackMetadata[] = [];
+    for (const file of files) {
+      const meta = await createLocalTrackMetadata(file);
+      newTracks.push(meta);
+    }
+    if (newTracks.length > 0) {
+      addTracks(newTracks);
+    }
+  };
 
   // When instance is running in taskbar widget mode
   if (isWidgetMode) {
@@ -50,42 +65,42 @@ export const App = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 flex overflow-hidden">
-        {/* Left Side: Cover Art, Track Details, and Visualizer */}
-        <section className="w-80 border-r border-palette-border p-6 flex flex-col justify-between bg-palette-surface/40">
-          <div>
-            <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-palette-surface border border-palette-border shadow-md mb-4">
+        {/* Left Side: Cover Art, Track Details, and Synced Lyrics */}
+        <section className="w-80 border-r border-palette-border p-5 flex flex-col space-y-4 bg-palette-surface/30 overflow-hidden">
+          <div className="flex-shrink-0">
+            <div className="relative w-full aspect-square max-h-52 rounded-2xl overflow-hidden bg-palette-surface border border-palette-border shadow-md mb-3 mx-auto">
               {currentTrack?.coverUrl ? (
                 <img
                   src={currentTrack.coverUrl}
                   alt={currentTrack.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain object-center bg-palette-surface/50"
                 />
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center text-palette-muted space-y-2">
-                  <div className="w-12 h-12 rounded-xl bg-palette-base border border-palette-border flex items-center justify-center text-palette-charcoal font-bold text-sm shadow-sm">
-                    Aura
+                  <div className="w-10 h-10 rounded-xl bg-palette-base border border-palette-border flex items-center justify-center text-palette-charcoal font-bold text-xs shadow-sm">
+                    TaskBar
                   </div>
-                  <span className="text-xs">No active track</span>
+                  <span className="text-[11px]">No active track</span>
                 </div>
               )}
             </div>
 
-            <div className="mb-4">
-              <h2 className="text-base font-bold text-palette-charcoal truncate">
-                {currentTrack?.title || "Welcome to AuraMusic"}
+            <div>
+              <h2 className="text-sm font-bold text-palette-charcoal truncate">
+                {currentTrack?.title || "Welcome to TaskBarMusic"}
               </h2>
-              <p className="text-xs text-palette-muted font-medium truncate mt-0.5">
-                {currentTrack?.artist || "SoundCloud, YouTube, Spotify"}
+              <p className="text-[11px] text-palette-muted font-medium truncate mt-0.5">
+                {currentTrack?.artist || "SoundCloud, YouTube, Spotify, Local"}
               </p>
             </div>
           </div>
 
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-palette-muted mb-2">
-              Audio Spectrum
-            </div>
-            <Visualizer isPlaying={isPlaying} />
-          </div>
+          {/* Synchronized Lyrics Panel */}
+          <LyricsPanel
+            currentTrack={currentTrack}
+            currentTime={currentTime}
+            onSeek={seek}
+          />
         </section>
 
         {/* Right Side: Interactive Playlist Queue */}
@@ -97,6 +112,8 @@ export const App = () => {
             onSelectTrack={playTrack}
             onRemoveTrack={removeTrack}
             onClearPlaylist={clearPlaylist}
+            onReorderTracks={reorderTracks}
+            onAddLocalFiles={handleAddLocalFiles}
           />
         </section>
       </main>
@@ -110,9 +127,11 @@ export const App = () => {
         volume={volume}
         isMuted={isMuted}
         isLoadingStream={isLoadingStream}
+        playbackMode={playbackMode}
         onTogglePlay={togglePlay}
         onPlayNext={playNext}
         onPlayPrevious={playPrevious}
+        onTogglePlaybackMode={togglePlaybackMode}
         onSeek={seek}
         onChangeVolume={changeVolume}
         onToggleMute={toggleMute}

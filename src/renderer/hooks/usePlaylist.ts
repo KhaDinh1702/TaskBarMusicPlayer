@@ -1,7 +1,8 @@
 import { useState, useEffect } from "preact/hooks";
 import { TrackMetadata } from "../../shared/types";
+import { reorderList } from "../utils/playlistUtils";
 
-const STORAGE_KEY = "auramusic_playlist_v1";
+const STORAGE_KEY = "taskbarmusic_playlist_v1";
 
 export const usePlaylist = () => {
   const [playlist, setPlaylist] = useState<TrackMetadata[]>(() => {
@@ -37,10 +38,15 @@ export const usePlaylist = () => {
     setPlaylist([]);
   };
 
+  const reorderTracks = (startIndex: number, endIndex: number) => {
+    setPlaylist((prev) => reorderList(prev, startIndex, endIndex));
+  };
+
   return {
     playlist,
     addTracks,
     removeTrack,
-    clearPlaylist
+    clearPlaylist,
+    reorderTracks
   };
 };

@@ -18,6 +18,8 @@ export const resolveAudioUrl = async (url: string): Promise<TrackMetadata[]> => 
       return await resolveYouTubeUrl(url);
     case "spotify":
       return await resolveSpotifyUrl(url);
+    default:
+      throw new Error("Unsupported or unrecognized audio source.");
   }
 };
 

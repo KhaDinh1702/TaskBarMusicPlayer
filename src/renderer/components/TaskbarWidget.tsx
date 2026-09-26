@@ -58,7 +58,7 @@ export const TaskbarWidget = () => {
 
         <div className="overflow-hidden pr-2">
           <p className="text-xs font-bold text-palette-charcoal truncate leading-tight">
-            {track?.title || "AuraMusic Standby"}
+            {track?.title || "TaskBarMusic Standby"}
           </p>
           <p className="text-[10px] text-palette-muted truncate leading-tight mt-0.5">
             {track?.artist || "Ready to play"}

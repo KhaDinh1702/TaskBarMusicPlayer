@@ -1,4 +1,5 @@
-export type TrackSource = "soundcloud" | "youtube" | "spotify";
+export type TrackSource = "soundcloud" | "youtube" | "spotify" | "local";
+export type PlaybackMode = "normal" | "repeat" | "repeat-one" | "shuffle";
 
 export interface TrackMetadata {
   id: string;

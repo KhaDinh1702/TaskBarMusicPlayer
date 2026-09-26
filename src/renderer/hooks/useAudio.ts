@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "preact/hooks";
-import { TrackMetadata, PlaybackState } from "../../shared/types";
+import { TrackMetadata, PlaybackState, PlaybackMode } from "../../shared/types";
+import { getNextTrackIndex, getPreviousTrackIndex } from "../utils/playlistUtils";
 
 type ActivePlayerEngine = "youtube" | "soundcloud" | "native";
 
@@ -7,7 +8,6 @@ declare global {
   interface Window {
     YT?: any;
     SC?: any;
-    onYouTubeIframeAPIReady?: () => void;
   }
 }
 
@@ -26,10 +26,7 @@ const extractYouTubeId = (url: string): string => {
   return "";
 };
 
-export const useAudio = (
-  playlist: TrackMetadata[],
-  onTrackEnded?: () => void
-) => {
+export const useAudio = (playlist: TrackMetadata[]) => {
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(-1);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<number>(0);
@@ -38,11 +35,21 @@ export const useAudio = (
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [isLoadingStream, setIsLoadingStream] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [playbackMode, setPlaybackMode] = useState<PlaybackMode>("repeat");
 
   const activeEngineRef = useRef<ActivePlayerEngine>("youtube");
   const ytPlayerRef = useRef<any>(null);
   const scWidgetRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const playlistRef = useRef<TrackMetadata[]>(playlist);
+  const currentTrackIndexRef = useRef<number>(currentTrackIndex);
+  const playbackModeRef = useRef<PlaybackMode>(playbackMode);
+
+  playlistRef.current = playlist;
+  currentTrackIndexRef.current = currentTrackIndex;
+  playbackModeRef.current = playbackMode;
+
   const currentTrack = playlist[currentTrackIndex] || null;
 
   const syncStateWithElectron = useCallback(
@@ -61,19 +68,42 @@ export const useAudio = (
     [currentTrack, volume, isMuted]
   );
 
+  const handleTrackEnded = useCallback(() => {
+    const currentList = playlistRef.current;
+    if (currentList.length === 0) return;
+
+    if (playbackModeRef.current === "repeat-one") {
+      seek(0);
+      playTrack(currentTrackIndexRef.current);
+      return;
+    }
+
+    const nextIndex = getNextTrackIndex(
+      currentTrackIndexRef.current,
+      currentList.length,
+      playbackModeRef.current
+    );
+
+    if (nextIndex !== -1) {
+      playTrack(nextIndex);
+    } else {
+      setIsPlaying(false);
+    }
+  }, []);
+
   const setupYouTubePlayer = () => {
     if (ytPlayerRef.current || !window.YT || !window.YT.Player) return;
-    let ytContainer = document.getElementById("aura-yt-player");
+    let ytContainer = document.getElementById("taskbar-yt-player");
     if (!ytContainer) {
       ytContainer = document.createElement("div");
-      ytContainer.id = "aura-yt-player";
+      ytContainer.id = "taskbar-yt-player";
       ytContainer.style.cssText =
         "position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;top:-9999px;";
       document.body.appendChild(ytContainer);
     }
 
     try {
-      ytPlayerRef.current = new window.YT.Player("aura-yt-player", {
+      ytPlayerRef.current = new window.YT.Player("taskbar-yt-player", {
         height: "1",
         width: "1",
         playerVars: {
@@ -91,7 +121,7 @@ export const useAudio = (
               setIsPlaying(false);
             } else if (event.data === 0) {
               setIsPlaying(false);
-              playNext();
+              handleTrackEnded();
             }
           },
           onError: () => {
@@ -107,10 +137,10 @@ export const useAudio = (
 
   const setupSoundCloudWidget = () => {
     if (scWidgetRef.current || !window.SC) return;
-    let scIframe = document.getElementById("aura-sc-player") as HTMLIFrameElement;
+    let scIframe = document.getElementById("taskbar-sc-player") as HTMLIFrameElement;
     if (!scIframe) {
       scIframe = document.createElement("iframe");
-      scIframe.id = "aura-sc-player";
+      scIframe.id = "taskbar-sc-player";
       scIframe.src = "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/293";
       scIframe.style.cssText =
         "position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;top:-9999px;";
@@ -124,7 +154,7 @@ export const useAudio = (
       });
       widget.bind(window.SC.Widget.Events.FINISH, () => {
         setIsPlaying(false);
-        playNext();
+        handleTrackEnded();
       });
       widget.bind(window.SC.Widget.Events.PLAY, () => {
         setIsPlaying(true);
@@ -177,25 +207,69 @@ export const useAudio = (
     }
   };
 
+  const playNativeTrack = (track: TrackMetadata) => {
+    activeEngineRef.current = "native";
+    ytPlayerRef.current?.pauseVideo();
+    scWidgetRef.current?.pause();
+
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+    }
+
+    const audio = audioRef.current;
+    audio.src = track.streamUrl || track.sourceUrl;
+    audio.volume = isMuted ? 0 : volume;
+
+    audio.onplay = () => {
+      setIsPlaying(true);
+      setIsLoadingStream(false);
+    };
+    audio.onpause = () => {
+      setIsPlaying(false);
+    };
+    audio.onended = () => {
+      setIsPlaying(false);
+      handleTrackEnded();
+    };
+    audio.ontimeupdate = () => {
+      setCurrentTime(audio.currentTime);
+      if (!isNaN(audio.duration) && audio.duration > 0) {
+        setDuration(audio.duration);
+      }
+      syncStateWithElectron(true, audio.currentTime, audio.duration || 0);
+    };
+    audio.onerror = () => {
+      setIsLoadingStream(false);
+      setErrorMessage("Local audio playback error");
+    };
+
+    audio.play().catch(() => {
+      setIsLoadingStream(false);
+    });
+  };
+
   const playTrack = useCallback(
     (index: number) => {
-      if (index < 0 || index >= playlist.length) return;
+      const list = playlistRef.current;
+      if (index < 0 || index >= list.length) return;
       setCurrentTrackIndex(index);
-      const track = playlist[index];
+      const track = list[index];
       setIsLoadingStream(true);
       setErrorMessage(null);
 
-      if (track.source === "youtube" || track.source === "spotify") {
-        playYouTubeTrack(track);
+      if (track.source === "local") {
+        playNativeTrack(track);
       } else if (track.source === "soundcloud") {
         playSoundCloudTrack(track);
+      } else {
+        playYouTubeTrack(track);
       }
     },
-    [playlist, isMuted, volume]
+    [isMuted, volume]
   );
 
   const togglePlay = useCallback(() => {
-    if (currentTrackIndex === -1 && playlist.length > 0) {
+    if (currentTrackIndexRef.current === -1 && playlistRef.current.length > 0) {
       playTrack(0);
       return;
     }
@@ -204,25 +278,57 @@ export const useAudio = (
     if (isPlaying) {
       if (engine === "youtube") ytPlayerRef.current?.pauseVideo();
       if (engine === "soundcloud") scWidgetRef.current?.pause();
+      if (engine === "native") audioRef.current?.pause();
       setIsPlaying(false);
     } else {
       if (engine === "youtube") ytPlayerRef.current?.playVideo();
       if (engine === "soundcloud") scWidgetRef.current?.play();
+      if (engine === "native") audioRef.current?.play();
       setIsPlaying(true);
     }
-  }, [isPlaying, currentTrackIndex, playlist, playTrack]);
+  }, [isPlaying, playTrack]);
 
   const playNext = useCallback(() => {
-    if (playlist.length === 0) return;
-    const nextIndex = (currentTrackIndex + 1) % playlist.length;
-    playTrack(nextIndex);
-  }, [currentTrackIndex, playlist, playTrack]);
+    const list = playlistRef.current;
+    if (list.length === 0) return;
+    const nextIndex = getNextTrackIndex(
+      currentTrackIndexRef.current,
+      list.length,
+      playbackModeRef.current
+    );
+    if (nextIndex !== -1) {
+      playTrack(nextIndex);
+    }
+  }, [playTrack]);
 
   const playPrevious = useCallback(() => {
-    if (playlist.length === 0) return;
-    const prevIndex = currentTrackIndex <= 0 ? playlist.length - 1 : currentTrackIndex - 1;
-    playTrack(prevIndex);
-  }, [currentTrackIndex, playlist, playTrack]);
+    const list = playlistRef.current;
+    if (list.length === 0) return;
+    const prevIndex = getPreviousTrackIndex(
+      currentTrackIndexRef.current,
+      list.length,
+      playbackModeRef.current
+    );
+    if (prevIndex !== -1) {
+      playTrack(prevIndex);
+    }
+  }, [playTrack]);
+
+  const togglePlaybackMode = useCallback(() => {
+    setPlaybackMode((prev) => {
+      switch (prev) {
+        case "normal":
+          return "repeat";
+        case "repeat":
+          return "repeat-one";
+        case "repeat-one":
+          return "shuffle";
+        case "shuffle":
+        default:
+          return "normal";
+      }
+    });
+  }, []);
 
   const seek = useCallback(
     (timeInSeconds: number) => {
@@ -232,6 +338,8 @@ export const useAudio = (
         ytPlayerRef.current?.seekTo(timeInSeconds, true);
       } else if (engine === "soundcloud") {
         scWidgetRef.current?.seekTo(timeInSeconds * 1000);
+      } else if (engine === "native" && audioRef.current) {
+        audioRef.current.currentTime = timeInSeconds;
       }
       syncStateWithElectron(isPlaying, timeInSeconds, duration);
     },
@@ -243,18 +351,20 @@ export const useAudio = (
     setVolume(clamped);
     ytPlayerRef.current?.setVolume(clamped * 100);
     scWidgetRef.current?.setVolume(clamped * 100);
-  }, []);
+    if (audioRef.current) {
+      audioRef.current.volume = isMuted ? 0 : clamped;
+    }
+  }, [isMuted]);
 
   const toggleMute = useCallback(() => {
     const nextMute = !isMuted;
     setIsMuted(nextMute);
-    if (nextMute) {
-      ytPlayerRef.current?.mute();
-      scWidgetRef.current?.setVolume(0);
-    } else {
-      ytPlayerRef.current?.unMute();
-      ytPlayerRef.current?.setVolume(volume * 100);
-      scWidgetRef.current?.setVolume(volume * 100);
+    const targetVol = nextMute ? 0 : volume;
+    ytPlayerRef.current?.[nextMute ? "mute" : "unMute"]?.();
+    ytPlayerRef.current?.setVolume(targetVol * 100);
+    scWidgetRef.current?.setVolume(targetVol * 100);
+    if (audioRef.current) {
+      audioRef.current.volume = targetVol;
     }
   }, [isMuted, volume]);
 
@@ -270,7 +380,7 @@ export const useAudio = (
     return () => clearInterval(checkApisInterval);
   }, []);
 
-  // Polling playback time & duration while playing
+  // Polling playback time & duration for YouTube and SoundCloud
   useEffect(() => {
     if (!isPlaying) return;
 
@@ -317,10 +427,12 @@ export const useAudio = (
     isMuted,
     isLoadingStream,
     errorMessage,
+    playbackMode,
     playTrack,
     togglePlay,
     playNext,
     playPrevious,
+    togglePlaybackMode,
     seek,
     changeVolume,
     toggleMute

@@ -1,5 +1,5 @@
 {
-  "name": "aura-music-player",
+  "name": "taskbar-music-player",
   "version": "1.0.0",
   "description": "Desktop Music Player with Multi-Source Link Resolver and Transparent Taskbar Widget",
   "main": "dist-electron/main/index.js",

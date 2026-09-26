@@ -1,4 +1,4 @@
-# AuraMusic Player (Desktop)
+# TaskBarMusic Player (Desktop)
 
 A minimalist, high-performance desktop music player featuring multi-source link resolution (SoundCloud, YouTube, Spotify) and a frameless, translucent Taskbar widget.
 
@@ -25,7 +25,7 @@ A minimalist, high-performance desktop music player featuring multi-source link 
 - Powered by Web Audio API (AnalyserNode) to deliver dynamic frequency spectrum bars.
 
 ### Portable Single-File Executable
-- Packaged as a standalone portable Windows binary (AuraMusic-Portable.exe).
+- Packaged as a standalone portable Windows binary (TaskBarMusic-Portable.exe).
 - Requires zero installation, no administrative privileges, and no external runtime dependencies.
 
 ---
@@ -106,7 +106,7 @@ npm run dev
 ```bash
 npm run build:portable
 ```
-The resulting executable will be available at `dist-release/AuraMusic-Portable-1.0.0.exe`.
+The resulting executable will be available at `dist-release/TaskBarMusic-Portable-1.0.0.exe`.
 
 ---
 

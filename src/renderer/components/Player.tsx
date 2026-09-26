@@ -1,5 +1,17 @@
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Loader2 } from "lucide-preact";
-import { TrackMetadata } from "../../shared/types";
+import {
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  Volume2,
+  VolumeX,
+  Loader2,
+  Repeat,
+  Repeat1,
+  Shuffle,
+  ListOrdered
+} from "lucide-preact";
+import { TrackMetadata, PlaybackMode } from "../../shared/types";
 
 interface PlayerProps {
   currentTrack: TrackMetadata | null;
@@ -9,9 +21,11 @@ interface PlayerProps {
   volume: number;
   isMuted: boolean;
   isLoadingStream: boolean;
+  playbackMode: PlaybackMode;
   onTogglePlay: () => void;
   onPlayNext: () => void;
   onPlayPrevious: () => void;
+  onTogglePlaybackMode: () => void;
   onSeek: (seconds: number) => void;
   onChangeVolume: (val: number) => void;
   onToggleMute: () => void;
@@ -32,9 +46,11 @@ export const Player = ({
   volume,
   isMuted,
   isLoadingStream,
+  playbackMode,
   onTogglePlay,
   onPlayNext,
   onPlayPrevious,
+  onTogglePlaybackMode,
   onSeek,
   onChangeVolume,
   onToggleMute
@@ -54,8 +70,8 @@ export const Player = ({
             }`}
           />
         ) : (
-          <div className="w-12 h-12 rounded-lg bg-palette-base border border-palette-border flex items-center justify-center text-palette-muted font-bold text-xs">
-            Aura
+          <div className="w-12 h-12 rounded-lg bg-palette-base border border-palette-border flex items-center justify-center text-palette-muted font-bold text-[10px]">
+            TaskBar
           </div>
         )}
         <div className="overflow-hidden">
@@ -63,7 +79,7 @@ export const Player = ({
             {currentTrack?.title || "No track selected"}
           </p>
           <p className="text-[11px] text-palette-muted truncate">
-            {currentTrack?.artist || "Paste a link above to begin"}
+            {currentTrack?.artist || "Paste a link or drop local files to begin"}
           </p>
         </div>
       </div>
@@ -71,6 +87,26 @@ export const Player = ({
       {/* Main playback controls & timeline */}
       <div className="flex flex-col items-center w-2/4 max-w-xl px-4">
         <div className="flex items-center space-x-4 mb-1.5">
+          <button
+            onClick={onTogglePlaybackMode}
+            className={`p-1.5 transition-colors rounded-lg ${
+              playbackMode !== "normal"
+                ? "text-palette-charcoal bg-palette-base border border-palette-border shadow-sm"
+                : "text-palette-muted hover:text-palette-charcoal"
+            }`}
+            title={`Mode: ${playbackMode.toUpperCase()} (Click to toggle)`}
+          >
+            {playbackMode === "shuffle" ? (
+              <Shuffle className="w-3.5 h-3.5" />
+            ) : playbackMode === "repeat-one" ? (
+              <Repeat1 className="w-3.5 h-3.5" />
+            ) : playbackMode === "repeat" ? (
+              <Repeat className="w-3.5 h-3.5" />
+            ) : (
+              <ListOrdered className="w-3.5 h-3.5" />
+            )}
+          </button>
+
           <button
             onClick={onPlayPrevious}
             className="p-1.5 text-palette-muted hover:text-palette-charcoal transition-colors"

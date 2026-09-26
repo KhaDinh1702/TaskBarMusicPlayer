@@ -1,6 +1,6 @@
 {
-  "appId": "com.auramusic.player",
-  "productName": "AuraMusic",
+  "appId": "com.taskbarmusic.player",
+  "productName": "TaskBarMusic",
   "directories": {
     "output": "dist-release"
   },
