@@ -1,6 +1,7 @@
 import { useState, useEffect } from "preact/hooks";
 import { Play, Pause, SkipBack, SkipForward, Maximize2 } from "lucide-preact";
 import { PlaybackState } from "../../shared/types";
+import { getHighResCoverUrl } from "../utils/mediaUtils";
 
 export const TaskbarWidget = () => {
   const [playbackState, setPlaybackState] = useState<PlaybackState>({
@@ -43,7 +44,7 @@ export const TaskbarWidget = () => {
         <div className="relative w-8 h-8 rounded overflow-hidden bg-palette-charcoal border border-palette-border flex-shrink-0 flex items-center justify-center">
           {track?.coverUrl ? (
             <img
-              src={track.coverUrl}
+              src={getHighResCoverUrl(track.coverUrl)}
               alt=""
               className="w-full h-full object-cover"
             />

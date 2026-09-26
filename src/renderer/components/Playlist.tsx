@@ -1,5 +1,6 @@
 import { useState } from "preact/hooks";
 import { PlaylistModel, TrackMetadata } from "../../shared/types";
+import { getHighResCoverUrl } from "../utils/mediaUtils";
 
 interface PlaylistProps {
   playlists: PlaylistModel[];
@@ -195,7 +196,7 @@ export const Playlist = ({
                   <div className="relative w-8 h-8 rounded overflow-hidden bg-palette-base border border-palette-border flex-shrink-0 flex items-center justify-center">
                     {track.coverUrl ? (
                       <img
-                        src={track.coverUrl}
+                        src={getHighResCoverUrl(track.coverUrl)}
                         alt={track.title}
                         className="w-full h-full object-cover"
                       />

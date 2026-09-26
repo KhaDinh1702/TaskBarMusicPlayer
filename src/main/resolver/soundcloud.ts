@@ -1,13 +1,18 @@
 import playdl from "play-dl";
 import { TrackMetadata } from "../../shared/types";
 
+const getHighResSoundCloudThumbnail = (url?: string): string => {
+  if (!url) return "";
+  return url.replace("-large.jpg", "-t500x500.jpg");
+};
+
 const extractTrackData = (info: any): TrackMetadata => {
   return {
     id: `sc-${info.id || Date.now()}`,
     title: info.name || info.title || "SoundCloud Track",
     artist: info.user?.name || info.publisher?.artist || "SoundCloud Artist",
     duration: Math.floor((info.durationInSec || (info.durationInMs ? info.durationInMs / 1000 : 0)) || 0),
-    coverUrl: info.thumbnail || "",
+    coverUrl: getHighResSoundCloudThumbnail(info.thumbnail),
     source: "soundcloud",
     sourceUrl: info.url
   };

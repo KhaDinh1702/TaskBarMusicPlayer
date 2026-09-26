@@ -1,13 +1,24 @@
 import playdl from "play-dl";
 import { TrackMetadata } from "../../shared/types";
 
+const getBestThumbnail = (video: any): string => {
+  if (video.thumbnails && Array.isArray(video.thumbnails) && video.thumbnails.length > 0) {
+    const highest = video.thumbnails[video.thumbnails.length - 1];
+    if (highest?.url) return highest.url;
+  }
+  if (video.id) {
+    return `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`;
+  }
+  return "";
+};
+
 const extractVideoData = (video: any): TrackMetadata => {
   return {
     id: `yt-${video.id || Date.now()}`,
     title: video.title || "YouTube Video",
     artist: video.channel?.name || "YouTube Creator",
     duration: video.durationInSec || 0,
-    coverUrl: video.thumbnails?.[0]?.url || "",
+    coverUrl: getBestThumbnail(video),
     source: "youtube",
     sourceUrl: video.url || `https://www.youtube.com/watch?v=${video.id}`
   };

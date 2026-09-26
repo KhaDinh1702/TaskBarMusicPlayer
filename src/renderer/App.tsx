@@ -11,6 +11,7 @@ import { useAudio } from "./hooks/useAudio";
 import { useLyrics } from "./hooks/useLyrics";
 import { createLocalTrackMetadata } from "./utils/localAudio";
 import { Language } from "./utils/i18n";
+import { getHighResCoverUrl } from "./utils/mediaUtils";
 import { TrackMetadata } from "../shared/types";
 
 const THEME_STORAGE_KEY = "taskbarmusic_theme";
@@ -125,13 +126,31 @@ export const App = () => {
         {/* Left Side: Cover Art, Track Details, and Synced Lyrics */}
         <section className="w-80 border-r border-palette-border p-5 flex flex-col space-y-4 bg-palette-surface/30 overflow-hidden">
           <div className="flex-shrink-0">
-            <div className="relative w-full aspect-square max-h-52 rounded-2xl overflow-hidden bg-palette-surface border border-palette-border shadow-md mb-3 mx-auto">
+            <div
+              className={`relative w-full ${
+                currentTrack?.source === "youtube" ? "aspect-video" : "aspect-square"
+              } max-h-56 rounded-2xl overflow-hidden bg-palette-surface border border-palette-border shadow-md mb-3 mx-auto flex items-center justify-center`}
+            >
               {currentTrack?.coverUrl ? (
-                <img
-                  src={currentTrack.coverUrl}
-                  alt={currentTrack.title}
-                  className="w-full h-full object-contain object-center bg-palette-surface/50"
-                />
+                <>
+                  <img
+                    src={getHighResCoverUrl(currentTrack.coverUrl)}
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 w-full h-full object-cover blur-lg opacity-30 scale-110 pointer-events-none"
+                  />
+                  <img
+                    src={getHighResCoverUrl(currentTrack.coverUrl)}
+                    alt={currentTrack.title}
+                    onError={(e) => {
+                      const img = e.currentTarget;
+                      if (img.src.includes("maxresdefault.jpg")) {
+                        img.src = img.src.replace("maxresdefault.jpg", "hqdefault.jpg");
+                      }
+                    }}
+                    className="relative z-10 w-full h-full object-cover object-center"
+                  />
+                </>
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center text-palette-muted space-y-2">
                   <div className="w-10 h-10 rounded-xl bg-palette-base border border-palette-border" />
@@ -152,15 +171,54 @@ export const App = () => {
             </div>
           </div>
 
-          {/* Synchronized Lyrics Panel (with Spotify Expand button) */}
-          <LyricsPanel
-            currentTrack={currentTrack}
-            lyrics={lyrics}
-            isLoading={isLoadingLyrics}
-            currentTime={currentTime}
-            onSeek={seek}
-            onToggleExpand={() => setIsLyricsExpanded(true)}
-          />
+          {/* Synchronized Lyrics Panel (hidden when lyrics are expanded) */}
+          {!isLyricsExpanded ? (
+            <LyricsPanel
+              currentTrack={currentTrack}
+              lyrics={lyrics}
+              isLoading={isLoadingLyrics}
+              currentTime={currentTime}
+              onSeek={seek}
+              onToggleExpand={() => setIsLyricsExpanded(true)}
+            />
+          ) : (
+            <div className="flex-1 flex flex-col justify-between p-4 rounded-xl border border-palette-border bg-palette-surface/20 text-xs font-mono">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-palette-border/50 text-[10px] text-palette-muted uppercase tracking-wider font-bold">
+                  <span>{language === "vi" ? "THÔNG TIN PHÁT" : "NOW PLAYING"}</span>
+                  <span className="px-1.5 py-0.5 rounded bg-palette-surface text-palette-charcoal border border-palette-border uppercase">
+                    {currentTrack?.source || "AUDIO"}
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 text-palette-muted">
+                  <div className="flex justify-between">
+                    <span>{language === "vi" ? "Thời lượng:" : "Duration:"}</span>
+                    <span className="text-palette-charcoal font-semibold">
+                      {currentTrack
+                        ? `${Math.floor(currentTrack.duration / 60)}:${(currentTrack.duration % 60)
+                            .toString()
+                            .padStart(2, "0")}`
+                        : "--:--"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>{language === "vi" ? "Chế độ xem:" : "View mode:"}</span>
+                    <span className="text-palette-charcoal font-semibold">
+                      {language === "vi" ? "Lời bài hát toàn cảnh" : "Cinema Lyrics"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setIsLyricsExpanded(false)}
+                className="w-full py-2 px-3 rounded-lg border border-palette-border hover:border-palette-charcoal bg-palette-surface text-palette-charcoal font-semibold text-xs transition-colors flex items-center justify-center space-x-1.5 shadow-sm"
+              >
+                <span>{language === "vi" ? "ĐÓNG LỜI NHẠC [ESC]" : "EXIT LYRICS [ESC]"}</span>
+              </button>
+            </div>
+          )}
         </section>
 
         {/* Right Side: Interactive Multi-Playlist Queue OR Spotify-Style Expanded Cinema Lyrics */}

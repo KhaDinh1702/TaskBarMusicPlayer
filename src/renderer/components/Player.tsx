@@ -12,6 +12,7 @@ import {
   ListOrdered
 } from "lucide-preact";
 import { TrackMetadata, PlaybackMode } from "../../shared/types";
+import { getHighResCoverUrl } from "../utils/mediaUtils";
 
 interface PlayerProps {
   currentTrack: TrackMetadata | null;
@@ -67,7 +68,7 @@ export const Player = ({
       <div className="flex items-center space-x-3 w-1/4 min-w-[200px]">
         {currentTrack?.coverUrl ? (
           <img
-            src={currentTrack.coverUrl}
+            src={getHighResCoverUrl(currentTrack.coverUrl)}
             alt={currentTrack.title}
             className={`w-12 h-12 rounded-lg object-cover shadow-sm border border-palette-border ${
               isPlaying ? "animate-pulse-subtle" : ""
