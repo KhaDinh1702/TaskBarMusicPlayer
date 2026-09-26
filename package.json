@@ -1,0 +1,45 @@
+{
+  "name": "aura-music-player",
+  "version": "1.0.0",
+  "description": "Desktop Music Player with Multi-Source Link Resolver and Transparent Taskbar Widget",
+  "main": "dist-electron/main/index.js",
+  "scripts": {
+    "dev": "npm run build:electron && node \"./node_modules/concurrently/dist/bin/concurrently.js\" -k \"node ./node_modules/vite/bin/vite.js\" \"node ./node_modules/wait-on/bin/wait-on tcp:5173 && node ./node_modules/electron/cli.js .\"",
+    "build:electron": "node \"./node_modules/typescript/bin/tsc\" -p tsconfig.electron.json",
+    "build:renderer": "node \"./node_modules/vite/bin/vite.js\" build",
+    "build": "npm run build:renderer && npm run build:electron",
+    "build:portable": "npm run build && node \"./node_modules/electron-builder/out/cli/cli.js\" --win portable",
+    "test": "node \"./node_modules/vitest/vitest.mjs\" run"
+  },
+  "keywords": [
+    "music-player",
+    "electron",
+    "preact",
+    "soundcloud",
+    "youtube",
+    "spotify"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "lucide-preact": "^1.16.0",
+    "play-dl": "^1.9.7",
+    "preact": "^10.26.4",
+    "tailwind-merge": "^3.0.2"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.1",
+    "@types/node": "^22.13.10",
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^9.1.2",
+    "electron": "^35.0.0",
+    "electron-builder": "^25.1.8",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.1",
+    "vitest": "^3.0.8",
+    "wait-on": "^8.0.3"
+  }
+}
