@@ -1,5 +1,15 @@
 import { useState, useRef } from "preact/hooks";
-import { Settings } from "lucide-preact";
+import {
+  Settings,
+  Plus,
+  FolderPlus,
+  Search,
+  Loader2,
+  Tv,
+  Minus,
+  Square,
+  X
+} from "lucide-preact";
 import { TrackMetadata } from "../../shared/types";
 import { createLocalTrackMetadata } from "../utils/localAudio";
 import { Language, getTranslation } from "../utils/i18n";
@@ -90,20 +100,28 @@ export const Header = ({ onAddTracks, language, onOpenSettings }: HeaderProps) =
 
       <div className="flex-1 max-w-xl mx-4 titlebar-no-drag relative flex items-center space-x-2">
         <form onSubmit={handleResolve} className="relative flex-1 flex items-center">
+          <div className="absolute left-2.5 pointer-events-none text-palette-muted">
+            <Search className="w-3.5 h-3.5" />
+          </div>
           <input
             type="text"
             placeholder={t("searchPlaceholder")}
             value={urlInput}
             onInput={(e) => setUrlInput((e.target as HTMLInputElement).value)}
             disabled={isResolving}
-            className="w-full bg-palette-surface border border-palette-border rounded py-1.5 pl-3 pr-20 text-xs font-mono text-palette-charcoal placeholder-palette-muted focus:outline-none focus:border-palette-charcoal transition-all shadow-inner"
+            className="w-full bg-palette-surface border border-palette-border rounded py-1.5 pl-8 pr-20 text-xs font-mono text-palette-charcoal placeholder-palette-muted focus:outline-none focus:border-palette-charcoal transition-all shadow-inner"
           />
           <button
             type="submit"
             disabled={isResolving || !urlInput.trim()}
-            className="absolute right-1 px-2.5 py-1 bg-palette-charcoal hover:opacity-90 disabled:opacity-40 text-palette-base rounded text-[11px] font-mono font-semibold transition-all"
+            className="absolute right-1 px-2.5 py-1 bg-palette-charcoal hover:opacity-90 disabled:opacity-40 text-palette-base rounded text-[11px] font-mono font-semibold transition-all flex items-center space-x-1"
           >
-            {isResolving ? "..." : t("add")}
+            {isResolving ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <Plus className="w-3 h-3" />
+            )}
+            <span>{isResolving ? "..." : t("add")}</span>
           </button>
         </form>
 
@@ -120,9 +138,10 @@ export const Header = ({ onAddTracks, language, onOpenSettings }: HeaderProps) =
           onClick={() => fileInputRef.current?.click()}
           title="Open local audio files (.mp3, .flac, .wav)"
           disabled={isResolving}
-          className="px-2.5 py-1.5 bg-palette-surface border border-palette-border hover:border-palette-charcoal text-palette-charcoal rounded text-[11px] font-mono font-medium transition-colors shadow-sm flex items-center justify-center flex-shrink-0"
+          className="px-2.5 py-1.5 bg-palette-surface border border-palette-border hover:border-palette-charcoal text-palette-charcoal rounded text-[11px] font-mono font-medium transition-colors shadow-sm flex items-center space-x-1.5 flex-shrink-0"
         >
-          {t("local")}
+          <FolderPlus className="w-3.5 h-3.5" />
+          <span>{t("local")}</span>
         </button>
 
         {statusMessage && (
@@ -132,7 +151,7 @@ export const Header = ({ onAddTracks, language, onOpenSettings }: HeaderProps) =
         )}
       </div>
 
-      <div className="flex items-center space-x-1.5 titlebar-no-drag text-xs font-mono">
+      <div className="flex items-center space-x-1 titlebar-no-drag">
         <button
           onClick={onOpenSettings}
           title={t("settings")}
@@ -144,27 +163,33 @@ export const Header = ({ onAddTracks, language, onOpenSettings }: HeaderProps) =
         <button
           onClick={handleToggleWidget}
           title="Switch to Transparent Taskbar Mini Widget (Ctrl+M)"
-          className="px-2 py-1 text-palette-muted hover:text-palette-charcoal hover:bg-palette-surface rounded transition-colors text-[11px] font-semibold"
+          className="p-1.5 text-palette-muted hover:text-palette-charcoal hover:bg-palette-surface rounded transition-colors"
         >
-          {t("widget")}
+          <Tv className="w-4 h-4" />
         </button>
+
         <button
           onClick={handleMinimize}
-          className="px-2 py-1 text-palette-muted hover:text-palette-charcoal hover:bg-palette-surface rounded transition-colors text-xs"
+          title="Minimize"
+          className="p-1.5 text-palette-muted hover:text-palette-charcoal hover:bg-palette-surface rounded transition-colors"
         >
-          _
+          <Minus className="w-4 h-4" />
         </button>
+
         <button
           onClick={handleMaximize}
-          className="px-2 py-1 text-palette-muted hover:text-palette-charcoal hover:bg-palette-surface rounded transition-colors text-xs"
+          title="Maximize"
+          className="p-1.5 text-palette-muted hover:text-palette-charcoal hover:bg-palette-surface rounded transition-colors"
         >
-          [ ]
+          <Square className="w-3.5 h-3.5" />
         </button>
+
         <button
           onClick={handleClose}
-          className="px-2 py-1 text-palette-muted hover:text-red-600 hover:bg-red-50 rounded transition-colors text-xs"
+          title="Close"
+          className="p-1.5 text-palette-muted hover:text-red-600 hover:bg-red-500/10 rounded transition-colors"
         >
-          X
+          <X className="w-4 h-4" />
         </button>
       </div>
     </header>
