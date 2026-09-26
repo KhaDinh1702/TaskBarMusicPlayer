@@ -1,5 +1,4 @@
 import { useState, useRef } from "preact/hooks";
-import { Plus, Minus, Square, X, Tv, Loader2, FolderPlus } from "lucide-preact";
 import { TrackMetadata } from "../../shared/types";
 import { createLocalTrackMetadata } from "../utils/localAudio";
 
@@ -77,10 +76,10 @@ export const Header = ({ onAddTracks }: HeaderProps) => {
   return (
     <header className="titlebar-drag h-14 bg-palette-base/95 border-b border-palette-border px-4 flex items-center justify-between z-50">
       <div className="flex items-center space-x-3 titlebar-no-drag">
-        <div className="w-7 h-7 rounded-lg bg-palette-charcoal flex items-center justify-center font-bold text-xs text-palette-base shadow-sm">
+        <div className="px-2 py-1 rounded bg-palette-charcoal font-mono font-bold text-xs text-palette-base shadow-sm">
           T
         </div>
-        <span className="font-semibold text-sm tracking-wider text-palette-charcoal">
+        <span className="font-semibold text-xs tracking-widest uppercase text-palette-charcoal">
           TaskBarMusic
         </span>
       </div>
@@ -93,19 +92,14 @@ export const Header = ({ onAddTracks }: HeaderProps) => {
             value={urlInput}
             onInput={(e) => setUrlInput((e.target as HTMLInputElement).value)}
             disabled={isResolving}
-            className="w-full bg-palette-surface border border-palette-border rounded-lg py-1.5 pl-3 pr-20 text-xs text-palette-charcoal placeholder-palette-muted focus:outline-none focus:border-palette-charcoal focus:ring-1 focus:ring-palette-charcoal transition-all shadow-inner"
+            className="w-full bg-palette-surface border border-palette-border rounded py-1.5 pl-3 pr-20 text-xs font-mono text-palette-charcoal placeholder-palette-muted focus:outline-none focus:border-palette-charcoal transition-all shadow-inner"
           />
           <button
             type="submit"
             disabled={isResolving || !urlInput.trim()}
-            className="absolute right-1 px-2.5 py-1 bg-palette-charcoal hover:opacity-90 disabled:opacity-40 text-palette-base rounded text-xs font-medium flex items-center space-x-1 transition-all"
+            className="absolute right-1 px-2.5 py-1 bg-palette-charcoal hover:opacity-90 disabled:opacity-40 text-palette-base rounded text-[11px] font-mono font-semibold transition-all"
           >
-            {isResolving ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Plus className="w-3.5 h-3.5" />
-            )}
-            <span>{isResolving ? "Loading" : "Add"}</span>
+            {isResolving ? "..." : "ADD"}
           </button>
         </form>
 
@@ -122,43 +116,43 @@ export const Header = ({ onAddTracks }: HeaderProps) => {
           onClick={() => fileInputRef.current?.click()}
           title="Open local audio files (.mp3, .flac, .wav)"
           disabled={isResolving}
-          className="p-1.5 bg-palette-surface border border-palette-border hover:border-palette-charcoal text-palette-charcoal rounded-lg transition-colors shadow-sm flex items-center justify-center flex-shrink-0"
+          className="px-2.5 py-1.5 bg-palette-surface border border-palette-border hover:border-palette-charcoal text-palette-charcoal rounded text-[11px] font-mono font-medium transition-colors shadow-sm flex items-center justify-center flex-shrink-0"
         >
-          <FolderPlus className="w-4 h-4" />
+          LOCAL
         </button>
 
         {statusMessage && (
-          <p className="absolute -bottom-4 left-0 text-[11px] text-palette-charcoal font-medium truncate max-w-md">
+          <p className="absolute -bottom-4 left-0 text-[10px] font-mono text-palette-charcoal font-medium truncate max-w-md">
             {statusMessage}
           </p>
         )}
       </div>
 
-      <div className="flex items-center space-x-1 titlebar-no-drag">
+      <div className="flex items-center space-x-1.5 titlebar-no-drag text-xs font-mono">
         <button
           onClick={handleToggleWidget}
           title="Switch to Transparent Taskbar Mini Widget (Ctrl+M)"
-          className="p-1.5 text-palette-muted hover:text-palette-charcoal hover:bg-palette-surface rounded transition-colors"
+          className="px-2 py-1 text-palette-muted hover:text-palette-charcoal hover:bg-palette-surface rounded transition-colors text-[11px] font-semibold"
         >
-          <Tv className="w-4 h-4" />
+          WIDGET
         </button>
         <button
           onClick={handleMinimize}
-          className="p-1.5 text-palette-muted hover:text-palette-charcoal hover:bg-palette-surface rounded transition-colors"
+          className="px-2 py-1 text-palette-muted hover:text-palette-charcoal hover:bg-palette-surface rounded transition-colors text-xs"
         >
-          <Minus className="w-4 h-4" />
+          _
         </button>
         <button
           onClick={handleMaximize}
-          className="p-1.5 text-palette-muted hover:text-palette-charcoal hover:bg-palette-surface rounded transition-colors"
+          className="px-2 py-1 text-palette-muted hover:text-palette-charcoal hover:bg-palette-surface rounded transition-colors text-xs"
         >
-          <Square className="w-3.5 h-3.5" />
+          [ ]
         </button>
         <button
           onClick={handleClose}
-          className="p-1.5 text-palette-muted hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+          className="px-2 py-1 text-palette-muted hover:text-red-600 hover:bg-red-50 rounded transition-colors text-xs"
         >
-          <X className="w-4 h-4" />
+          X
         </button>
       </div>
     </header>

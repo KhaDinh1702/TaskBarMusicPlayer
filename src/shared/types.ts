@@ -39,6 +39,7 @@ export interface PlaybackState {
 export interface ElectronAPIBridge {
   resolveUrl: (url: string) => Promise<TrackMetadata[]>;
   getAudioStreamUrl: (track: TrackMetadata) => Promise<string>;
+  getPathForFile?: (file: File) => string;
   minimizeWindow: () => void;
   maximizeWindow: () => void;
   closeWindow: () => void;

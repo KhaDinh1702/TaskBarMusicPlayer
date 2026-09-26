@@ -1,16 +1,3 @@
-import {
-  Play,
-  Pause,
-  SkipBack,
-  SkipForward,
-  Volume2,
-  VolumeX,
-  Loader2,
-  Repeat,
-  Repeat1,
-  Shuffle,
-  ListOrdered
-} from "lucide-preact";
 import { TrackMetadata, PlaybackMode } from "../../shared/types";
 
 interface PlayerProps {
@@ -38,6 +25,20 @@ const formatSeconds = (sec: number): string => {
   return `${mins.toString().padStart(2, "0")}:${remainingSecs.toString().padStart(2, "0")}`;
 };
 
+const getModeLabel = (mode: PlaybackMode): string => {
+  switch (mode) {
+    case "repeat":
+      return "REP";
+    case "repeat-one":
+      return "REP-1";
+    case "shuffle":
+      return "SHUF";
+    case "normal":
+    default:
+      return "NORM";
+  }
+};
+
 export const Player = ({
   currentTrack,
   isPlaying,
@@ -58,27 +59,25 @@ export const Player = ({
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <footer className="h-20 bg-palette-surface/90 border-t border-palette-border px-6 flex items-center justify-between z-40 backdrop-blur-md">
+    <footer className="h-18 bg-palette-surface/90 border-t border-palette-border px-6 flex items-center justify-between z-40 backdrop-blur-md">
       {/* Current track meta */}
       <div className="flex items-center space-x-3 w-1/4 min-w-[200px]">
         {currentTrack?.coverUrl ? (
           <img
             src={currentTrack.coverUrl}
             alt={currentTrack.title}
-            className={`w-12 h-12 rounded-lg object-cover shadow-sm border border-palette-border ${
-              isPlaying ? "animate-pulse-subtle" : ""
-            }`}
+            className="w-10 h-10 rounded object-cover shadow-sm border border-palette-border"
           />
         ) : (
-          <div className="w-12 h-12 rounded-lg bg-palette-base border border-palette-border flex items-center justify-center text-palette-muted font-bold text-[10px]">
-            TaskBar
+          <div className="w-10 h-10 rounded bg-palette-base border border-palette-border flex items-center justify-center text-palette-muted font-mono font-bold text-[10px]">
+            T
           </div>
         )}
         <div className="overflow-hidden">
           <p className="text-xs font-semibold text-palette-charcoal truncate">
             {currentTrack?.title || "No track selected"}
           </p>
-          <p className="text-[11px] text-palette-muted truncate">
+          <p className="text-[10px] font-mono text-palette-muted truncate">
             {currentTrack?.artist || "Paste a link or drop local files to begin"}
           </p>
         </div>
@@ -86,64 +85,46 @@ export const Player = ({
 
       {/* Main playback controls & timeline */}
       <div className="flex flex-col items-center w-2/4 max-w-xl px-4">
-        <div className="flex items-center space-x-4 mb-1.5">
+        <div className="flex items-center space-x-3 mb-1.5 font-mono text-xs">
           <button
             onClick={onTogglePlaybackMode}
-            className={`p-1.5 transition-colors rounded-lg ${
-              playbackMode !== "normal"
-                ? "text-palette-charcoal bg-palette-base border border-palette-border shadow-sm"
-                : "text-palette-muted hover:text-palette-charcoal"
-            }`}
-            title={`Mode: ${playbackMode.toUpperCase()} (Click to toggle)`}
+            className="px-2 py-1 rounded border border-palette-border bg-palette-base text-palette-charcoal hover:border-palette-charcoal font-semibold text-[10px] transition-colors"
+            title={`Mode: ${playbackMode.toUpperCase()} (Click to change)`}
           >
-            {playbackMode === "shuffle" ? (
-              <Shuffle className="w-3.5 h-3.5" />
-            ) : playbackMode === "repeat-one" ? (
-              <Repeat1 className="w-3.5 h-3.5" />
-            ) : playbackMode === "repeat" ? (
-              <Repeat className="w-3.5 h-3.5" />
-            ) : (
-              <ListOrdered className="w-3.5 h-3.5" />
-            )}
+            {getModeLabel(playbackMode)}
           </button>
 
           <button
             onClick={onPlayPrevious}
-            className="p-1.5 text-palette-muted hover:text-palette-charcoal transition-colors"
+            className="px-2 py-1 text-palette-muted hover:text-palette-charcoal transition-colors font-medium text-[11px]"
             title="Previous (Ctrl+Left)"
           >
-            <SkipBack className="w-4 h-4" />
+            PREV
           </button>
 
           <button
             onClick={onTogglePlay}
             disabled={isLoadingStream}
-            className="w-9 h-9 rounded-full bg-palette-charcoal hover:opacity-90 text-palette-base flex items-center justify-center transition-all active:scale-95 shadow-md"
+            className="px-4 py-1 rounded bg-palette-charcoal hover:opacity-90 disabled:opacity-50 text-palette-base font-bold text-xs tracking-wider transition-all shadow-sm"
             title="Play/Pause (Space)"
           >
-            {isLoadingStream ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : isPlaying ? (
-              <Pause className="w-4 h-4" />
-            ) : (
-              <Play className="w-4 h-4 translate-x-0.5" />
-            )}
+            {isLoadingStream ? "..." : isPlaying ? "PAUSE" : "PLAY"}
           </button>
 
           <button
             onClick={onPlayNext}
-            className="p-1.5 text-palette-muted hover:text-palette-charcoal transition-colors"
+            className="px-2 py-1 text-palette-muted hover:text-palette-charcoal transition-colors font-medium text-[11px]"
             title="Next (Ctrl+Right)"
           >
-            <SkipForward className="w-4 h-4" />
+            NEXT
           </button>
         </div>
 
         {/* Timeline seekbar */}
-        <div className="w-full flex items-center space-x-2.5 text-[11px] text-palette-muted font-mono">
+        <div className="w-full flex items-center space-x-2.5 text-[10px] text-palette-muted font-mono">
           <span>{formatSeconds(currentTime)}</span>
           <div
-            className="relative flex-1 h-1.5 bg-palette-border/50 rounded-full overflow-hidden cursor-pointer group"
+            className="relative flex-1 h-1.5 bg-palette-border/50 rounded-full overflow-hidden cursor-pointer"
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
               const clickX = e.clientX - rect.left;
@@ -161,16 +142,12 @@ export const Player = ({
       </div>
 
       {/* Volume slider */}
-      <div className="flex items-center justify-end space-x-2 w-1/4">
+      <div className="flex items-center justify-end space-x-2 w-1/4 font-mono text-[10px]">
         <button
           onClick={onToggleMute}
-          className="p-1 text-palette-muted hover:text-palette-charcoal transition-colors"
+          className="px-1.5 py-0.5 border border-palette-border rounded text-palette-muted hover:text-palette-charcoal transition-colors"
         >
-          {isMuted || volume === 0 ? (
-            <VolumeX className="w-4 h-4 text-red-500" />
-          ) : (
-            <Volume2 className="w-4 h-4" />
-          )}
+          {isMuted || volume === 0 ? "MUTE" : "VOL"}
         </button>
         <input
           type="range"
@@ -179,7 +156,7 @@ export const Player = ({
           step="0.01"
           value={isMuted ? 0 : volume}
           onInput={(e) => onChangeVolume(parseFloat((e.target as HTMLInputElement).value))}
-          className="w-20 h-1 bg-palette-border accent-palette-charcoal cursor-pointer rounded-lg"
+          className="w-18 h-1 bg-palette-border accent-palette-charcoal cursor-pointer rounded"
         />
       </div>
     </footer>

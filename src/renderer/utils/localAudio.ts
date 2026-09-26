@@ -52,8 +52,19 @@ export const getAudioDuration = (fileUrl: string): Promise<number> => {
 
 export const createLocalTrackMetadata = async (file: File): Promise<TrackMetadata> => {
   const { artist, title } = parseFileName(file.name);
-  const objectUrl = URL.createObjectURL(file);
-  const duration = await getAudioDuration(objectUrl);
+
+  let diskPath = "";
+  if (window.electronAPI?.getPathForFile) {
+    diskPath = window.electronAPI.getPathForFile(file);
+  } else if ((file as any).path) {
+    diskPath = (file as any).path;
+  }
+
+  const audioUrl = diskPath
+    ? `local-audio://${diskPath.replace(/\\/g, "/")}`
+    : URL.createObjectURL(file);
+
+  const duration = await getAudioDuration(audioUrl);
   const uniqueId = `local-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
 
   return {
@@ -63,7 +74,7 @@ export const createLocalTrackMetadata = async (file: File): Promise<TrackMetadat
     duration,
     coverUrl: "",
     source: "local",
-    sourceUrl: objectUrl,
-    streamUrl: objectUrl
+    sourceUrl: audioUrl,
+    streamUrl: audioUrl
   };
 };

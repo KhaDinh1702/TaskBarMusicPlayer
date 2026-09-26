@@ -1,6 +1,21 @@
-import { app, BrowserWindow, ipcMain, globalShortcut } from "electron";
+import { app, BrowserWindow, ipcMain, globalShortcut, protocol, net } from "electron";
+import { pathToFileURL } from "node:url";
 
 app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: "local-audio",
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      bypassCSP: true,
+      stream: true
+    }
+  }
+]);
+
 import {
   createMainWindow,
   createTaskbarWidget,
@@ -79,6 +94,12 @@ const registerShortcuts = () => {
 };
 
 app.whenReady().then(async () => {
+  protocol.handle("local-audio", (request) => {
+    let filePath = request.url.replace(/^local-audio:\/\//, "");
+    filePath = decodeURIComponent(filePath);
+    return net.fetch(pathToFileURL(filePath).toString());
+  });
+
   registerIpcHandlers();
   createMainWindow();
   createTaskbarWidget();
