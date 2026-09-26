@@ -1,4 +1,5 @@
 import { useState, useEffect } from "preact/hooks";
+import { Play, Pause, SkipBack, SkipForward, Maximize2 } from "lucide-preact";
 import { PlaybackState } from "../../shared/types";
 
 export const TaskbarWidget = () => {
@@ -36,7 +37,7 @@ export const TaskbarWidget = () => {
       : 0;
 
   return (
-    <div className="titlebar-drag w-full h-full glass-widget rounded-xl p-2 flex items-center justify-between overflow-hidden shadow-xl border border-palette-border select-none bg-palette-base/95 text-palette-charcoal font-mono">
+    <div className="titlebar-drag w-full h-full glass-widget rounded-xl p-2 flex items-center justify-between overflow-hidden shadow-xl border border-palette-border select-none bg-palette-base/95 text-palette-charcoal">
       {/* Track Art & Info */}
       <div className="flex items-center space-x-2 overflow-hidden flex-1 titlebar-no-drag">
         <div className="relative w-8 h-8 rounded overflow-hidden bg-palette-charcoal border border-palette-border flex-shrink-0 flex items-center justify-center">
@@ -62,26 +63,33 @@ export const TaskbarWidget = () => {
       </div>
 
       {/* Mini Controls */}
-      <div className="flex items-center space-x-1 flex-shrink-0 titlebar-no-drag text-[10px] font-bold">
+      <div className="flex items-center space-x-1 flex-shrink-0 titlebar-no-drag">
         <button
           onClick={() => handleAction("prev")}
-          className="px-1.5 py-0.5 text-palette-muted hover:text-palette-charcoal transition-colors"
+          className="p-1 text-palette-muted hover:text-palette-charcoal transition-colors"
+          title="Previous"
         >
-          PREV
+          <SkipBack className="w-3.5 h-3.5" />
         </button>
 
         <button
           onClick={() => handleAction("toggle")}
-          className="px-2 py-0.5 rounded bg-palette-charcoal text-palette-base shadow transition-all active:scale-95"
+          className="w-6 h-6 rounded-full bg-palette-charcoal hover:opacity-90 text-palette-base flex items-center justify-center shadow transition-all active:scale-95"
+          title="Play/Pause"
         >
-          {playbackState.isPlaying ? "PAUSE" : "PLAY"}
+          {playbackState.isPlaying ? (
+            <Pause className="w-3 h-3" />
+          ) : (
+            <Play className="w-3 h-3 translate-x-0.5" />
+          )}
         </button>
 
         <button
           onClick={() => handleAction("next")}
-          className="px-1.5 py-0.5 text-palette-muted hover:text-palette-charcoal transition-colors"
+          className="p-1 text-palette-muted hover:text-palette-charcoal transition-colors"
+          title="Next"
         >
-          NEXT
+          <SkipForward className="w-3.5 h-3.5" />
         </button>
 
         <div className="w-[1px] h-3 bg-palette-border mx-1" />
@@ -89,9 +97,9 @@ export const TaskbarWidget = () => {
         <button
           onClick={handleExpand}
           title="Restore Main Window (Ctrl+M)"
-          className="px-1.5 py-0.5 text-palette-muted hover:text-palette-charcoal transition-colors"
+          className="p-1 text-palette-muted hover:text-palette-charcoal transition-colors"
         >
-          MAX
+          <Maximize2 className="w-3.5 h-3.5" />
         </button>
       </div>
 
