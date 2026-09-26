@@ -3,10 +3,12 @@ import { Header } from "./components/Header";
 import { Player } from "./components/Player";
 import { Playlist } from "./components/Playlist";
 import { LyricsPanel } from "./components/LyricsPanel";
+import { ExpandedLyrics } from "./components/ExpandedLyrics";
 import { TaskbarWidget } from "./components/TaskbarWidget";
 import { SettingsModal, AppTheme } from "./components/SettingsModal";
 import { usePlaylist } from "./hooks/usePlaylist";
 import { useAudio } from "./hooks/useAudio";
+import { useLyrics } from "./hooks/useLyrics";
 import { createLocalTrackMetadata } from "./utils/localAudio";
 import { Language } from "./utils/i18n";
 import { TrackMetadata } from "../shared/types";
@@ -30,6 +32,7 @@ export const App = () => {
   });
 
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [isLyricsExpanded, setIsLyricsExpanded] = useState<boolean>(false);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -48,7 +51,29 @@ export const App = () => {
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
 
-  const { playlist, addTracks, removeTrack, clearPlaylist, reorderTracks } = usePlaylist();
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isLyricsExpanded) {
+        setIsLyricsExpanded(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isLyricsExpanded]);
+
+  const {
+    playlists,
+    playlist,
+    activePlaylistId,
+    addTracks,
+    removeTrack,
+    clearPlaylist,
+    reorderTracks,
+    createPlaylist,
+    switchPlaylist,
+    deletePlaylist
+  } = usePlaylist();
+
   const {
     currentTrack,
     isPlaying,
@@ -67,6 +92,8 @@ export const App = () => {
     changeVolume,
     toggleMute
   } = useAudio(playlist);
+
+  const { lyrics, isLoading: isLoadingLyrics } = useLyrics(currentTrack);
 
   const handleAddLocalFiles = async (files: File[]) => {
     const newTracks: TrackMetadata[] = [];
@@ -107,9 +134,7 @@ export const App = () => {
                 />
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center text-palette-muted space-y-2">
-                  <div className="w-10 h-10 rounded-xl bg-palette-base border border-palette-border flex items-center justify-center text-palette-charcoal font-bold text-xs shadow-sm">
-                    TaskBar
-                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-palette-base border border-palette-border" />
                   <span className="text-[11px]">
                     {language === "vi" ? "Chưa có bài hát" : "No active track"}
                   </span>
@@ -127,26 +152,45 @@ export const App = () => {
             </div>
           </div>
 
-          {/* Synchronized Lyrics Panel */}
+          {/* Synchronized Lyrics Panel (with Spotify Expand button) */}
           <LyricsPanel
             currentTrack={currentTrack}
+            lyrics={lyrics}
+            isLoading={isLoadingLyrics}
             currentTime={currentTime}
             onSeek={seek}
+            onToggleExpand={() => setIsLyricsExpanded(true)}
           />
         </section>
 
-        {/* Right Side: Interactive Playlist Queue */}
+        {/* Right Side: Interactive Multi-Playlist Queue OR Spotify-Style Expanded Cinema Lyrics */}
         <section className="flex-1 flex flex-col overflow-hidden bg-palette-base">
-          <Playlist
-            tracks={playlist}
-            currentTrackId={currentTrack?.id}
-            isPlaying={isPlaying}
-            onSelectTrack={playTrack}
-            onRemoveTrack={removeTrack}
-            onClearPlaylist={clearPlaylist}
-            onReorderTracks={reorderTracks}
-            onAddLocalFiles={handleAddLocalFiles}
-          />
+          {isLyricsExpanded ? (
+            <ExpandedLyrics
+              currentTrack={currentTrack}
+              lyrics={lyrics}
+              currentTime={currentTime}
+              isLoading={isLoadingLyrics}
+              onSeek={seek}
+              onClose={() => setIsLyricsExpanded(false)}
+            />
+          ) : (
+            <Playlist
+              playlists={playlists}
+              activePlaylistId={activePlaylistId}
+              tracks={playlist}
+              currentTrackId={currentTrack?.id}
+              isPlaying={isPlaying}
+              onSelectTrack={playTrack}
+              onRemoveTrack={removeTrack}
+              onClearPlaylist={clearPlaylist}
+              onReorderTracks={reorderTracks}
+              onAddLocalFiles={handleAddLocalFiles}
+              onSwitchPlaylist={switchPlaylist}
+              onCreatePlaylist={createPlaylist}
+              onDeletePlaylist={deletePlaylist}
+            />
+          )}
         </section>
       </main>
 
@@ -160,10 +204,12 @@ export const App = () => {
         isMuted={isMuted}
         isLoadingStream={isLoadingStream}
         playbackMode={playbackMode}
+        isLyricsExpanded={isLyricsExpanded}
         onTogglePlay={togglePlay}
         onPlayNext={playNext}
         onPlayPrevious={playPrevious}
         onTogglePlaybackMode={togglePlaybackMode}
+        onToggleLyrics={() => setIsLyricsExpanded((prev) => !prev)}
         onSeek={seek}
         onChangeVolume={changeVolume}
         onToggleMute={toggleMute}

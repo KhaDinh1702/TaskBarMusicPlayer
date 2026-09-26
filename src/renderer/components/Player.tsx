@@ -22,10 +22,12 @@ interface PlayerProps {
   isMuted: boolean;
   isLoadingStream: boolean;
   playbackMode: PlaybackMode;
+  isLyricsExpanded?: boolean;
   onTogglePlay: () => void;
   onPlayNext: () => void;
   onPlayPrevious: () => void;
   onTogglePlaybackMode: () => void;
+  onToggleLyrics?: () => void;
   onSeek: (seconds: number) => void;
   onChangeVolume: (val: number) => void;
   onToggleMute: () => void;
@@ -47,10 +49,12 @@ export const Player = ({
   isMuted,
   isLoadingStream,
   playbackMode,
+  isLyricsExpanded,
   onTogglePlay,
   onPlayNext,
   onPlayPrevious,
   onTogglePlaybackMode,
+  onToggleLyrics,
   onSeek,
   onChangeVolume,
   onToggleMute
@@ -70,9 +74,7 @@ export const Player = ({
             }`}
           />
         ) : (
-          <div className="w-12 h-12 rounded-lg bg-palette-base border border-palette-border flex items-center justify-center text-palette-muted font-bold text-[10px]">
-            TaskBar
-          </div>
+          <div className="w-12 h-12 rounded-lg bg-palette-base border border-palette-border" />
         )}
         <div className="overflow-hidden">
           <p className="text-xs font-semibold text-palette-charcoal truncate">
@@ -160,8 +162,22 @@ export const Player = ({
         </div>
       </div>
 
-      {/* Volume slider */}
-      <div className="flex items-center justify-end space-x-2 w-1/4">
+      {/* Volume slider & Lyrics toggle */}
+      <div className="flex items-center justify-end space-x-3 w-1/4">
+        {onToggleLyrics && (
+          <button
+            onClick={onToggleLyrics}
+            className={`px-2 py-1 rounded text-[10px] font-mono font-bold transition-all border ${
+              isLyricsExpanded
+                ? "bg-palette-charcoal text-palette-base border-palette-charcoal shadow-sm"
+                : "bg-palette-base text-palette-muted border-palette-border hover:text-palette-charcoal hover:border-palette-charcoal"
+            }`}
+            title="Toggle Spotify-style Expanded Cinema Lyrics"
+          >
+            LYRICS
+          </button>
+        )}
+
         <button
           onClick={onToggleMute}
           className="p-1 text-palette-muted hover:text-palette-charcoal transition-colors"

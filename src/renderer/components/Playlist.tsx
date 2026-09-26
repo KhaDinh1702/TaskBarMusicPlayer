@@ -1,7 +1,9 @@
 import { useState } from "preact/hooks";
-import { TrackMetadata } from "../../shared/types";
+import { PlaylistModel, TrackMetadata } from "../../shared/types";
 
 interface PlaylistProps {
+  playlists: PlaylistModel[];
+  activePlaylistId: string;
   tracks: TrackMetadata[];
   currentTrackId?: string;
   isPlaying: boolean;
@@ -10,6 +12,9 @@ interface PlaylistProps {
   onClearPlaylist: () => void;
   onReorderTracks: (startIndex: number, endIndex: number) => void;
   onAddLocalFiles: (files: File[]) => void;
+  onSwitchPlaylist: (id: string) => void;
+  onCreatePlaylist: (name?: string) => void;
+  onDeletePlaylist: (id: string) => void;
 }
 
 const formatTrackDuration = (sec: number): string => {
@@ -35,6 +40,8 @@ const getSourceBadgeStyle = (source: string) => {
 };
 
 export const Playlist = ({
+  playlists,
+  activePlaylistId,
   tracks,
   currentTrackId,
   isPlaying,
@@ -42,7 +49,10 @@ export const Playlist = ({
   onRemoveTrack,
   onClearPlaylist,
   onReorderTracks,
-  onAddLocalFiles
+  onAddLocalFiles,
+  onSwitchPlaylist,
+  onCreatePlaylist,
+  onDeletePlaylist
 }: PlaylistProps) => {
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -80,32 +90,6 @@ export const Playlist = ({
     setDraggedIndex(null);
   };
 
-  if (tracks.length === 0) {
-    return (
-      <div
-        onDragOver={(e) => {
-          e.preventDefault();
-          setIsDragOver(true);
-        }}
-        onDragLeave={() => setIsDragOver(false)}
-        onDrop={handleFileDrop}
-        className={`flex-1 flex flex-col items-center justify-center p-8 text-center bg-palette-base transition-all font-mono ${
-          isDragOver ? "border-2 border-dashed border-palette-charcoal bg-palette-surface/50" : ""
-        }`}
-      >
-        <div className="w-12 h-12 rounded bg-palette-surface border border-palette-border flex items-center justify-center text-palette-charcoal font-bold text-xs mb-3 shadow-sm">
-          QUEUE
-        </div>
-        <h3 className="text-xs font-bold uppercase tracking-wider text-palette-charcoal mb-1">
-          {isDragOver ? "DROP AUDIO FILES TO ADD" : "NO TRACKS IN QUEUE"}
-        </h3>
-        <p className="text-[11px] text-palette-muted max-w-sm">
-          Paste SoundCloud, YouTube, Spotify links or drag & drop local audio files (.mp3, .flac, .wav).
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div
       onDragOver={(e) => {
@@ -118,103 +102,156 @@ export const Playlist = ({
         isDragOver ? "ring-2 ring-inset ring-palette-charcoal/50" : ""
       }`}
     >
-      <div className="flex items-center justify-between pb-3 border-b border-palette-border mb-2 font-mono">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-palette-charcoal">
-          QUEUE [{tracks.length}]
-        </h2>
-        <button
-          onClick={onClearPlaylist}
-          className="text-[11px] text-palette-muted hover:text-red-600 transition-colors uppercase"
-        >
-          CLEAR ALL
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
-        {tracks.map((track, idx) => {
-          const isCurrent = track.id === currentTrackId;
-          const indexFormatted = String(idx + 1).padStart(2, "0");
-
-          return (
-            <div
-              key={track.id}
-              draggable={true}
-              onDragStart={(e) => handleDragStart(e as unknown as DragEvent, idx)}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => handleItemDrop(e as unknown as DragEvent, idx)}
-              onClick={() => onSelectTrack(idx)}
-              className={`group flex items-center justify-between p-2 rounded transition-all cursor-pointer border ${
-                isCurrent
-                  ? "bg-palette-surface border-palette-charcoal shadow-sm"
-                  : "bg-palette-surface/50 border-transparent hover:bg-palette-surface hover:border-palette-border"
-              }`}
-            >
-              <div className="flex items-center space-x-3 overflow-hidden">
-                <span className="font-mono text-[10px] text-palette-muted cursor-grab select-none">
-                  {indexFormatted}
-                </span>
-
-                <div className="relative w-8 h-8 rounded overflow-hidden bg-palette-base border border-palette-border flex-shrink-0 flex items-center justify-center">
-                  {track.coverUrl ? (
-                    <img
-                      src={track.coverUrl}
-                      alt={track.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="font-mono text-[9px] text-palette-muted font-bold">
-                      T
-                    </span>
-                  )}
-                  {isCurrent && isPlaying && (
-                    <div className="absolute inset-0 bg-palette-charcoal/20 flex items-center justify-center">
-                      <div className="w-1.5 h-1.5 rounded-full bg-palette-charcoal" />
-                    </div>
-                  )}
-                </div>
-
-                <div className="overflow-hidden">
-                  <p
-                    className={`text-xs font-medium truncate ${
-                      isCurrent ? "text-palette-charcoal font-bold" : "text-palette-charcoal"
-                    }`}
+      {/* Multiple Playlists Tabs Bar */}
+      <div className="flex items-center justify-between pb-2 border-b border-palette-border mb-3 font-mono">
+        <div className="flex items-center space-x-1.5 overflow-x-auto scrollbar-none py-1 pr-2 flex-1">
+          {playlists.map((pl) => {
+            const isActive = pl.id === activePlaylistId;
+            return (
+              <div
+                key={pl.id}
+                onClick={() => onSwitchPlaylist(pl.id)}
+                className={`flex items-center space-x-1 px-3 py-1 rounded cursor-pointer text-[11px] font-semibold transition-all border whitespace-nowrap ${
+                  isActive
+                    ? "bg-palette-charcoal text-palette-base border-palette-charcoal shadow-sm"
+                    : "bg-palette-surface text-palette-muted border-palette-border hover:text-palette-charcoal hover:border-palette-charcoal"
+                }`}
+              >
+                <span>{pl.name}</span>
+                <span className="text-[9px] opacity-70">({pl.tracks.length})</span>
+                {pl.id !== "default" && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeletePlaylist(pl.id);
+                    }}
+                    className="ml-1 opacity-60 hover:opacity-100 hover:text-red-400 text-[10px]"
+                    title="Delete playlist"
                   >
-                    {track.title}
-                  </p>
-                  <p className="text-[10px] font-mono text-palette-muted truncate">
-                    {track.artist}
-                  </p>
+                    x
+                  </button>
+                )}
+              </div>
+            );
+          })}
+
+          <button
+            onClick={() => onCreatePlaylist()}
+            className="px-2.5 py-1 rounded border border-dashed border-palette-border text-palette-muted hover:text-palette-charcoal hover:border-palette-charcoal text-[11px] font-semibold whitespace-nowrap transition-colors"
+            title="Create new playlist"
+          >
+            + NEW
+          </button>
+        </div>
+
+        {tracks.length > 0 && (
+          <button
+            onClick={onClearPlaylist}
+            className="text-[10px] text-palette-muted hover:text-red-600 transition-colors uppercase whitespace-nowrap ml-3"
+          >
+            CLEAR
+          </button>
+        )}
+      </div>
+
+      {/* Playlist Content */}
+      {tracks.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-palette-base transition-all font-mono">
+          <div className="w-12 h-12 rounded bg-palette-surface border border-palette-border flex items-center justify-center text-palette-charcoal font-bold text-xs mb-3 shadow-sm">
+            QUEUE
+          </div>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-palette-charcoal mb-1">
+            {isDragOver ? "DROP AUDIO FILES TO ADD" : "PLAYLIST IS EMPTY"}
+          </h3>
+          <p className="text-[11px] text-palette-muted max-w-sm">
+            Paste SoundCloud, YouTube, Spotify links or drag & drop local audio files (.mp3, .flac, .wav).
+          </p>
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+          {tracks.map((track, idx) => {
+            const isCurrent = track.id === currentTrackId;
+            const indexFormatted = String(idx + 1).padStart(2, "0");
+
+            return (
+              <div
+                key={track.id}
+                draggable={true}
+                onDragStart={(e) => handleDragStart(e as unknown as DragEvent, idx)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => handleItemDrop(e as unknown as DragEvent, idx)}
+                onClick={() => onSelectTrack(idx)}
+                className={`group flex items-center justify-between p-2 rounded transition-all cursor-pointer border ${
+                  isCurrent
+                    ? "bg-palette-surface border-palette-charcoal shadow-sm"
+                    : "bg-palette-surface/50 border-transparent hover:bg-palette-surface hover:border-palette-border"
+                }`}
+              >
+                <div className="flex items-center space-x-3 overflow-hidden">
+                  <span className="font-mono text-[10px] text-palette-muted cursor-grab select-none">
+                    {indexFormatted}
+                  </span>
+
+                  <div className="relative w-8 h-8 rounded overflow-hidden bg-palette-base border border-palette-border flex-shrink-0 flex items-center justify-center">
+                    {track.coverUrl ? (
+                      <img
+                        src={track.coverUrl}
+                        alt={track.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-palette-surface" />
+                    )}
+                    {isCurrent && isPlaying && (
+                      <div className="absolute inset-0 bg-palette-charcoal/20 flex items-center justify-center">
+                        <div className="w-1.5 h-1.5 rounded-full bg-palette-charcoal" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="overflow-hidden">
+                    <p
+                      className={`text-xs font-medium truncate ${
+                        isCurrent ? "text-palette-charcoal font-bold" : "text-palette-charcoal"
+                      }`}
+                    >
+                      {track.title}
+                    </p>
+                    <p className="text-[10px] font-mono text-palette-muted truncate">
+                      {track.artist}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3 flex-shrink-0 ml-4 font-mono">
+                  <span
+                    className={`text-[9px] px-1.5 py-0.5 rounded border uppercase ${getSourceBadgeStyle(
+                      track.source
+                    )}`}
+                  >
+                    {track.source}
+                  </span>
+
+                  <span className="text-[10px] text-palette-muted">
+                    {formatTrackDuration(track.duration)}
+                  </span>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveTrack(track.id);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 px-1 text-[11px] text-palette-muted hover:text-red-600 transition-opacity"
+                    title="Remove from queue"
+                  >
+                    X
+                  </button>
                 </div>
               </div>
-
-              <div className="flex items-center space-x-3 flex-shrink-0 ml-4 font-mono">
-                <span
-                  className={`text-[9px] px-1.5 py-0.5 rounded border uppercase ${getSourceBadgeStyle(
-                    track.source
-                  )}`}
-                >
-                  {track.source}
-                </span>
-
-                <span className="text-[10px] text-palette-muted">
-                  {formatTrackDuration(track.duration)}
-                </span>
-
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRemoveTrack(track.id);
-                  }}
-                  className="opacity-0 group-hover:opacity-100 px-1 text-[11px] text-palette-muted hover:text-red-600 transition-opacity"
-                  title="Remove from queue"
-                >
-                  X
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

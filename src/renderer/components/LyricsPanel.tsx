@@ -1,46 +1,26 @@
-import { useState, useEffect, useRef } from "preact/hooks";
+import { useEffect, useRef } from "preact/hooks";
 import { TrackMetadata } from "../../shared/types";
-import { LyricLine, fetchLyricsFromLrclib } from "../utils/lyrics";
+import { LyricLine } from "../utils/lyrics";
 
 interface LyricsPanelProps {
   currentTrack: TrackMetadata | null;
+  lyrics: LyricLine[];
+  isLoading: boolean;
   currentTime: number;
   onSeek: (time: number) => void;
+  onToggleExpand?: () => void;
 }
 
-export const LyricsPanel = ({ currentTrack, currentTime, onSeek }: LyricsPanelProps) => {
-  const [lyrics, setLyrics] = useState<LyricLine[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+export const LyricsPanel = ({
+  currentTrack,
+  lyrics,
+  isLoading,
+  currentTime,
+  onSeek,
+  onToggleExpand
+}: LyricsPanelProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const activeLineRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!currentTrack) {
-      setLyrics([]);
-      return;
-    }
-
-    let isMounted = true;
-    setIsLoading(true);
-
-    fetchLyricsFromLrclib(currentTrack.title, currentTrack.artist, currentTrack.duration)
-      .then((lines) => {
-        if (isMounted) {
-          setLyrics(lines);
-          setIsLoading(false);
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setLyrics([]);
-          setIsLoading(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [currentTrack?.id]);
 
   let activeIndex = -1;
   for (let i = 0; i < lyrics.length; i++) {
@@ -66,7 +46,18 @@ export const LyricsPanel = ({ currentTrack, currentTime, onSeek }: LyricsPanelPr
         <span className="text-[10px] font-bold uppercase tracking-wider text-palette-muted">
           LYRICS
         </span>
-        {isLoading && <span className="text-[9px] text-palette-muted animate-pulse">SYNCING...</span>}
+        <div className="flex items-center space-x-2">
+          {isLoading && <span className="text-[9px] text-palette-muted animate-pulse">SYNCING...</span>}
+          {onToggleExpand && (
+            <button
+              onClick={onToggleExpand}
+              className="text-[9px] font-bold text-palette-muted hover:text-palette-charcoal px-1.5 py-0.5 rounded border border-palette-border hover:border-palette-charcoal transition-colors"
+              title="Expand lyrics to Spotify cinema view"
+            >
+              EXPAND
+            </button>
+          )}
+        </div>
       </div>
 
       <div

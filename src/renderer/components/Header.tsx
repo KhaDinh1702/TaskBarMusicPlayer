@@ -82,11 +82,8 @@ export const Header = ({ onAddTracks, language, onOpenSettings }: HeaderProps) =
 
   return (
     <header className="titlebar-drag h-14 bg-palette-base/95 border-b border-palette-border px-4 flex items-center justify-between z-50">
-      <div className="flex items-center space-x-3 titlebar-no-drag">
-        <div className="px-2 py-1 rounded bg-palette-charcoal font-mono font-bold text-xs text-palette-base shadow-sm">
-          T
-        </div>
-        <span className="font-semibold text-xs tracking-widest uppercase text-palette-charcoal">
+      <div className="flex items-center titlebar-no-drag">
+        <span className="font-bold text-xs tracking-widest uppercase text-palette-charcoal">
           TaskBarMusic
         </span>
       </div>
