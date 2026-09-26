@@ -2,11 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+:root,
+[data-theme="warm"] {
+  --palette-base: #F2EFE9;
+  --palette-surface: #E9E5DC;
+  --palette-border: #BFBFBD;
+  --palette-muted: #8C8C8C;
+  --palette-charcoal: #262626;
+  --palette-glass: rgba(233, 229, 220, 0.85);
+}
+
+[data-theme="dark"] {
+  --palette-base: #141414;
+  --palette-surface: #1E1E1E;
+  --palette-border: #333333;
+  --palette-muted: #888888;
+  --palette-charcoal: #EDEDED;
+  --palette-glass: rgba(30, 30, 30, 0.85);
+}
+
+[data-theme="light"] {
+  --palette-base: #FFFFFF;
+  --palette-surface: #F5F5F7;
+  --palette-border: #DCDCDC;
+  --palette-muted: #737373;
+  --palette-charcoal: #171717;
+  --palette-glass: rgba(245, 245, 247, 0.85);
+}
+
 @layer base {
   body {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    color: #262626;
-    background-color: #F2EFE9;
+    color: var(--palette-charcoal);
+    background-color: var(--palette-base);
   }
 }
 
@@ -21,12 +49,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #BFBFBD;
+  background: var(--palette-border);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #8C8C8C;
+  background: var(--palette-muted);
 }
 
 /* Draggable window regions for Electron */
@@ -40,16 +68,16 @@
 
 /* Minimal translucent cards & panels */
 .glass-panel {
-  background: rgba(233, 229, 220, 0.75);
+  background: var(--palette-glass);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid #BFBFBD;
+  border: 1px solid var(--palette-border);
 }
 
 .glass-widget {
-  background: rgba(242, 239, 233, 0.92);
+  background: var(--palette-glass);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid #BFBFBD;
-  box-shadow: 0 10px 30px -5px rgba(38, 38, 38, 0.15);
+  border: 1px solid var(--palette-border);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.25);
 }

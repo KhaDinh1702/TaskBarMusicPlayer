@@ -1,23 +1,30 @@
 import { useState, useRef } from "preact/hooks";
+import { Settings } from "lucide-preact";
 import { TrackMetadata } from "../../shared/types";
 import { createLocalTrackMetadata } from "../utils/localAudio";
+import { Language, getTranslation } from "../utils/i18n";
 
 interface HeaderProps {
   onAddTracks: (tracks: TrackMetadata[]) => void;
+  language: Language;
+  onOpenSettings: () => void;
 }
 
-export const Header = ({ onAddTracks }: HeaderProps) => {
+export const Header = ({ onAddTracks, language, onOpenSettings }: HeaderProps) => {
   const [urlInput, setUrlInput] = useState<string>("");
   const [isResolving, setIsResolving] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const t = (key: Parameters<typeof getTranslation>[1], params?: Record<string, string | number>) =>
+    getTranslation(language, key, params);
 
   const handleLocalFileSelection = async (e: Event) => {
     const target = e.target as HTMLInputElement;
     if (!target.files || target.files.length === 0) return;
 
     setIsResolving(true);
-    setStatusMessage("Importing local tracks...");
+    setStatusMessage(t("statusImporting"));
 
     try {
       const files = Array.from(target.files);
@@ -27,9 +34,9 @@ export const Header = ({ onAddTracks }: HeaderProps) => {
         newTracks.push(meta);
       }
       onAddTracks(newTracks);
-      setStatusMessage(`Imported ${newTracks.length} local track(s)`);
+      setStatusMessage(t("statusImportSuccess", { count: newTracks.length }));
     } catch {
-      setStatusMessage("Failed to import local files");
+      setStatusMessage(t("statusError"));
     } finally {
       setIsResolving(false);
       target.value = "";
@@ -43,7 +50,7 @@ export const Header = ({ onAddTracks }: HeaderProps) => {
     if (!trimmed || isResolving) return;
 
     setIsResolving(true);
-    setStatusMessage("Resolving media source...");
+    setStatusMessage(t("statusResolving"));
 
     try {
       if (window.electronAPI) {
@@ -51,15 +58,15 @@ export const Header = ({ onAddTracks }: HeaderProps) => {
         if (tracks && tracks.length > 0) {
           onAddTracks(tracks);
           setUrlInput("");
-          setStatusMessage(`Added ${tracks.length} track(s)`);
+          setStatusMessage(t("statusAddSuccess", { count: tracks.length }));
         } else {
-          setStatusMessage("No tracks found from provided link");
+          setStatusMessage(t("statusNoTracks"));
         }
       } else {
         setStatusMessage("Electron bridge unavailable");
       }
     } catch (err) {
-      const rawMsg = err instanceof Error ? err.message : "Error resolving link";
+      const rawMsg = err instanceof Error ? err.message : t("statusError");
       const cleanMsg = rawMsg.replace(/^Error invoking remote method '[^']+':\s*(Error:\s*)?/, "");
       setStatusMessage(cleanMsg);
     } finally {
@@ -88,7 +95,7 @@ export const Header = ({ onAddTracks }: HeaderProps) => {
         <form onSubmit={handleResolve} className="relative flex-1 flex items-center">
           <input
             type="text"
-            placeholder="Paste YouTube, SoundCloud, or Spotify link here..."
+            placeholder={t("searchPlaceholder")}
             value={urlInput}
             onInput={(e) => setUrlInput((e.target as HTMLInputElement).value)}
             disabled={isResolving}
@@ -99,7 +106,7 @@ export const Header = ({ onAddTracks }: HeaderProps) => {
             disabled={isResolving || !urlInput.trim()}
             className="absolute right-1 px-2.5 py-1 bg-palette-charcoal hover:opacity-90 disabled:opacity-40 text-palette-base rounded text-[11px] font-mono font-semibold transition-all"
           >
-            {isResolving ? "..." : "ADD"}
+            {isResolving ? "..." : t("add")}
           </button>
         </form>
 
@@ -118,7 +125,7 @@ export const Header = ({ onAddTracks }: HeaderProps) => {
           disabled={isResolving}
           className="px-2.5 py-1.5 bg-palette-surface border border-palette-border hover:border-palette-charcoal text-palette-charcoal rounded text-[11px] font-mono font-medium transition-colors shadow-sm flex items-center justify-center flex-shrink-0"
         >
-          LOCAL
+          {t("local")}
         </button>
 
         {statusMessage && (
@@ -130,11 +137,19 @@ export const Header = ({ onAddTracks }: HeaderProps) => {
 
       <div className="flex items-center space-x-1.5 titlebar-no-drag text-xs font-mono">
         <button
+          onClick={onOpenSettings}
+          title={t("settings")}
+          className="p-1.5 text-palette-muted hover:text-palette-charcoal hover:bg-palette-surface rounded transition-colors"
+        >
+          <Settings className="w-4 h-4" />
+        </button>
+
+        <button
           onClick={handleToggleWidget}
           title="Switch to Transparent Taskbar Mini Widget (Ctrl+M)"
           className="px-2 py-1 text-palette-muted hover:text-palette-charcoal hover:bg-palette-surface rounded transition-colors text-[11px] font-semibold"
         >
-          WIDGET
+          {t("widget")}
         </button>
         <button
           onClick={handleMinimize}

@@ -8,17 +8,17 @@ export default {
     extend: {
       colors: {
         palette: {
-          base: "#F2EFE9",
-          surface: "#E9E5DC",
-          border: "#BFBFBD",
-          muted: "#8C8C8C",
-          charcoal: "#262626"
+          base: "var(--palette-base)",
+          surface: "var(--palette-surface)",
+          border: "var(--palette-border)",
+          muted: "var(--palette-muted)",
+          charcoal: "var(--palette-charcoal)"
         },
         surface: {
-          base: "#F2EFE9",
-          card: "#E9E5DC",
-          glass: "rgba(233, 229, 220, 0.85)",
-          border: "#BFBFBD"
+          base: "var(--palette-base)",
+          card: "var(--palette-surface)",
+          glass: "var(--palette-glass)",
+          border: "var(--palette-border)"
         }
       },
       animation: {
